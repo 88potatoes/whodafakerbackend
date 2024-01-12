@@ -31,12 +31,11 @@ app.get("/game", (req, res) => {
 
     do {
         roomCode = generateRandomString(5);
-    } while (roomCodes.includes(roomCode))
+    } while (roomCode in rooms)
 
-    roomCodes.push(roomCode);
     rooms[roomCode] = { host: null, players: [] };
     res.json({roomCode: roomCode})
-    console.log(roomCodes);
+    console.log(Object.keys(rooms));
 })
 
 app.get("/join/:roomCode", (req, res) => {
@@ -44,7 +43,7 @@ app.get("/join/:roomCode", (req, res) => {
     console.log(roomCode);
     
     let status = null;
-    if (roomCodes.includes(roomCode)) {
+    if (roomCode in rooms) {
         status = "good"
     } else {
         status = "noRoomCode"
@@ -87,12 +86,22 @@ io.on("connection", (socket) => {
             socket.emit("join_status", {status: "fail"})
             return;
         }
-        rooms[data.roomCode].players.push(socket.id)
+        rooms[data.roomCode].players.push(socket)
         console.log("players", rooms[data.roomCode].players)
         socket.emit("join_status", {status: "success"})
         socket.roomCode = data.roomCode;
 
-        rooms[data.roomCode].host.emit("players_update", {players: rooms[data.roomCode].players})
+        rooms[data.roomCode].host.emit("players_update", {players: rooms[data.roomCode].players.map(socket => socket.id)})
+    })
+
+    socket.on("close_room", (data) => {
+        if (!(data.roomCode in rooms)) return;
+        const roomToClose = rooms[data.roomCode];
+        for (let player of roomToClose.players) {
+            player.emit("room_close")
+        }
+        delete rooms[data.roomCode];
+        console.log(Object.keys(rooms))
     })
 
     socket.on("disconnect", () => {
