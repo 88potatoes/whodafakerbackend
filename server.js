@@ -134,6 +134,13 @@ io.on("connection", (socket) => {
         }
     })
 
+    socket.on("end_game", (data) => {
+        if (!rooms[data.roomCode]) return;
+        rooms[data.roomCode].players.forEach(player => {
+            player.emit("end_game")
+        })
+    })
+
     socket.on("disconnect", () => {
         if(!socket.roomCode || !(socket.roomCode in rooms)) return;
         rooms[socket.roomCode].players = rooms[socket.roomCode].players.filter(item => item != socket.id)
