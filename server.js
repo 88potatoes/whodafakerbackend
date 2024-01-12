@@ -74,10 +74,6 @@ function getRandomBoolArray(len, trues) {
 io.on("connection", (socket) => {
     console.log(`${socket.id} connected`)
 
-    socket.on("disconnect", () => {
-        console.log(`${socket.id} disconnected`)
-    })
-
     socket.on("join_room_host", (data) => {
         console.log("host joined")
         // TODO send some message to clinet about connection success
@@ -142,8 +138,10 @@ io.on("connection", (socket) => {
     })
 
     socket.on("disconnect", () => {
+        console.log("disconnect", socket.id)
         if(!socket.roomCode || !(socket.roomCode in rooms)) return;
-        rooms[socket.roomCode].players = rooms[socket.roomCode].players.filter(item => item != socket.id)
+        rooms[socket.roomCode].players = rooms[socket.roomCode].players.filter(item => item.id != socket.id)
+        rooms[socket.roomCode].host.emit("players_update", {players: rooms[socket.roomCode].players.map(socket => socket.id)})
     })
 })
 io.listen(9091)
