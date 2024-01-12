@@ -58,6 +58,19 @@ const io = new Server({
         methods: ["GET"]
     }
 });
+
+function getRandomBoolArray(len, trues) {
+    const arr = Array(trues).fill(true).concat(Array(len-trues).fill(false))
+
+    // Fisher-Yates shuffle alg
+    for (let i = arr.length - 1; i > 0; i--) {
+        let j = Math.floor(Math.random() * (i+1));
+        [arr[i], arr[j]] = [arr[j], arr[i]]
+    }
+
+    return arr;
+}
+
 io.on("connection", (socket) => {
     console.log(`${socket.id} connected`)
 
@@ -66,15 +79,16 @@ io.on("connection", (socket) => {
     })
 
     socket.on("join_room_host", (data) => {
-
+        console.log("host joined")
         // TODO send some message to clinet about connection success
-        console.log(`data: ${JSON.stringify(data)}`)
+        // console.log(`data: ${JSON.stringify(data)}`)
         if (!(data.roomCode in rooms)) {
             socket.emit("join_status", {status: "fail"})
             return;
         }
         
         rooms[data.roomCode].host = socket;
+        console.log(rooms[data.roomCode].host)
         socket.emit("join_status", {status: "success"})
         // console.log("host", rooms[data.roomCode].host)
     })
@@ -86,10 +100,11 @@ io.on("connection", (socket) => {
             return;
         }
         rooms[data.roomCode].players.push(socket)
-        console.log("players", rooms[data.roomCode].players)
+        // console.log("players", rooms[data.roomCode].players)
         socket.emit("join_status", {status: "success"})
         socket.roomCode = data.roomCode;
 
+        console.log(rooms[data.roomCode].host)
         rooms[data.roomCode].host.emit("players_update", {players: rooms[data.roomCode].players.map(socket => socket.id)})
     })
 
@@ -101,6 +116,22 @@ io.on("connection", (socket) => {
         }
         delete rooms[data.roomCode];
         console.log(Object.keys(rooms))
+    })
+
+    socket.on("start_game", (data) => {
+        //data: {word: string, nfakers: int, roomCode: string}
+        // get a randomised array
+        const randArr = getRandomBoolArray(rooms[data.roomCode].players.length, data.nfakers);
+        console.log("randArr", randArr)
+        // true => faker
+
+        //overlay randArr on players
+        for (let i = 0; i < randArr.length; i++) {
+            rooms[data.roomCode].players[i].emit("start_game", {
+                role: randArr[i] ? "faker" : "good", 
+                word: randArr[i] ? null : data.word
+            })
+        }
     })
 
     socket.on("disconnect", () => {
