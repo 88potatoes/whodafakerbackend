@@ -8,7 +8,6 @@ app.use(cors({
     origin: "http://localhost:5173"
 }))
 
-let roomCodes = [];
 let rooms = {};
 
 app.listen(9000, () => {
@@ -105,53 +104,8 @@ io.on("connection", (socket) => {
     })
 
     socket.on("disconnect", () => {
-        if(!socket.roomCode) return;
+        if(!socket.roomCode || !(socket.roomCode in rooms)) return;
         rooms[socket.roomCode].players = rooms[socket.roomCode].players.filter(item => item != socket.id)
     })
 })
 io.listen(9091)
-
-
-
-// const xss = new XSocketServer({port: 9090});
-
-// xss.register_event("desktop", "join_room_host", (ws, data) => {
-//     console.log("join_room_host:", data.roomCode);
-//     // console.log(rooms)
-//     ws.role = "host";
-//     rooms[data.roomCode].push(ws);
-// })
-// xss.register_event("phone", "join_room_host", (ws, data) => {
-//     // console.log(data.roomCode);
-//     // console.log(rooms)
-//     ws.role = "host";
-//     rooms[data.roomCode].push(ws);
-// })
-
-// xss.register_event("desktop", "join_room", (ws, data) => {
-//     console.log("join_room data", data)
-//     rooms[data.roomCode].push(ws);
-
-//     const currentPlayers = [];
-//     for (let player of rooms[data.roomCode]) {
-//         currentPlayers.push(player.id)
-//     }
-//     console.log(currentPlayers);
-//     ws_send(rooms[data.roomCode][0], "player_join", {players: currentPlayers})
-// })
-
-// xss.register_event("phone", "join_room", (ws, data) => {
-//     rooms[data.roomCode].push(ws);
-
-//     const currentPlayers = [];
-//     for (let player of rooms[data.roomCode]) {
-//         console.log(player)
-//         currentPlayers.push(player.id)
-//     }
-//     // const currentPlayers = rooms[data.roomCode].reduce((acc, curr) => {
-//     //     acc.push(curr.id)
-//     //     return acc;
-//     // }, [])
-//     console.log(currentPlayers);
-//     ws_send(rooms[data.roomCode][0], "player_join", {players: currentPlayers})
-// })
