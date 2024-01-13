@@ -1,7 +1,6 @@
 import express from "express";
 import cors from "cors";
 import { Server } from "socket.io";
-import http from "http";
 
 const app = express()
 app.use(cors({
@@ -95,13 +94,15 @@ io.on("connection", (socket) => {
             socket.emit("join_status", {status: "fail"})
             return;
         }
+
+        socket.username = data.username;
         rooms[data.roomCode].players.push(socket)
         // console.log("players", rooms[data.roomCode].players)
         socket.emit("join_status", {status: "success"})
         socket.roomCode = data.roomCode;
 
         console.log(rooms[data.roomCode].host)
-        rooms[data.roomCode].host.emit("players_update", {players: rooms[data.roomCode].players.map(socket => socket.id)})
+        rooms[data.roomCode].host.emit("players_update", {players: rooms[data.roomCode].players.map(socket => socket.username)})
     })
 
     socket.on("close_room", (data) => {
