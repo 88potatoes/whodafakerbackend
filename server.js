@@ -59,6 +59,10 @@ const io = new Server({
 });
 
 function getRandomBoolArray(len, trues) {
+    if (len-trues < 0) {
+        console.log("invalid array length")
+        return;
+    }
     const arr = Array(trues).fill(true).concat(Array(len-trues).fill(false))
 
     // Fisher-Yates shuffle alg
@@ -74,34 +78,39 @@ io.on("connection", (socket) => {
     console.log(`${socket.id} connected`)
 
     socket.on("join_room_host", (data) => {
-        console.log("host joined")
         // TODO send some message to clinet about connection success
         // console.log(`data: ${JSON.stringify(data)}`)
-        if (!(data.roomCode in rooms)) {
+
+
+        if (data.roomCode == null || !(data.roomCode in rooms)) {
             socket.emit("join_status", {status: "fail"})
             return;
         }
         
         rooms[data.roomCode].host = socket;
-        console.log(rooms[data.roomCode].host)
         socket.emit("join_status", {status: "success"})
         // console.log("host", rooms[data.roomCode].host)
+
+        console.log("JOINHOST")
+        console.log("ROOMCODE", data.roomCode)
+        console.log("ROOM", rooms[data.roomCode])
     })
     
     socket.on("join_room", (data) => {
         // TODO send some message to clinet about connection success
-        if (!(data.roomCode in rooms)) {
+        if (data.roomCode == null || !(data.roomCode in rooms)) {
             socket.emit("join_status", {status: "fail"})
             return;
         }
-
+        console.log("JOIN")
+        console.log("ROOMCODE", data.roomCode)
+        console.log("ROOM", rooms[data.roomCode])
         socket.username = data.username;
         rooms[data.roomCode].players.push(socket)
         // console.log("players", rooms[data.roomCode].players)
         socket.emit("join_status", {status: "success"})
         socket.roomCode = data.roomCode;
 
-        console.log(rooms[data.roomCode].host)
         rooms[data.roomCode].host.emit("players_update", {players: rooms[data.roomCode].players.map(socket => socket.username)})
     })
 
@@ -117,7 +126,13 @@ io.on("connection", (socket) => {
 
     socket.on("start_game", (data) => {
         //data: {word: string, nfakers: int, roomCode: string}
+        if (data.roomCode == null || !(data.roomCode in rooms)) {
+            console.log("something wrong with game start")
+            return;
+        }
+        
         // get a randomised array
+        console.log(`START GAME - Player Length ${rooms[data.roomCode].players.length} - nFakers ${data.nfakers}`)
         const randArr = getRandomBoolArray(rooms[data.roomCode].players.length, data.nfakers);
         console.log("randArr", randArr)
         // true => faker
@@ -132,7 +147,7 @@ io.on("connection", (socket) => {
     })
 
     socket.on("end_game", (data) => {
-        if (!rooms[data.roomCode]) return;
+        if (data.roomCode == null || !rooms[data.roomCode]) return;
         rooms[data.roomCode].players.forEach(player => {
             player.emit("end_game")
         })
