@@ -1,15 +1,17 @@
 import express from "express";
 import cors from "cors";
 import { Server } from "socket.io";
+import setUp from "./setup.json" assert {type: "json"};
 
+// console.log(setUp)
 const app = express()
 app.use(cors({
-    origin: "http://localhost:5173"
+    origin: setUp.ORIGIN
 }))
 
 let rooms = {};
 
-app.listen(9000, () => {
+app.listen(setUp.APP_PORT, () => {
     console.log('connected')
 })
 
@@ -53,7 +55,7 @@ app.get("/join/:roomCode", (req, res) => {
 
 const io = new Server({
     cors: {
-        origin: "http://localhost:5173",
+        origin: setUp.ORIGIN,
         methods: ["GET"]
     }
 });
@@ -160,4 +162,4 @@ io.on("connection", (socket) => {
         rooms[socket.roomCode].host.emit("players_update", {players: rooms[socket.roomCode].players.map(socket => socket.id)})
     })
 })
-io.listen(9091)
+io.listen(setUp.WS_PORT)

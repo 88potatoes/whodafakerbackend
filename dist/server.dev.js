@@ -6,14 +6,17 @@ var _cors = _interopRequireDefault(require("cors"));
 
 var _socket = require("socket.io");
 
+var _setup = _interopRequireDefault(require("./setup.json"));
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
+// console.log(setUp)
 var app = (0, _express["default"])();
 app.use((0, _cors["default"])({
-  origin: "http://localhost:5173"
+  origin: _setup["default"].ORIGIN
 }));
 var rooms = {};
-app.listen(9000, function () {
+app.listen(_setup["default"].APP_PORT, function () {
   console.log('connected');
 });
 
@@ -64,7 +67,7 @@ app.get("/join/:roomCode", function (req, res) {
 
 var io = new _socket.Server({
   cors: {
-    origin: "http://localhost:5173",
+    origin: _setup["default"].ORIGIN,
     methods: ["GET"]
   }
 });
@@ -202,4 +205,4 @@ io.on("connection", function (socket) {
     });
   });
 });
-io.listen(9091);
+io.listen(_setup["default"].WS_PORT);
