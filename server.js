@@ -41,14 +41,17 @@ app.get("/game", (req, res) => {
 app.get("/join/:roomCode", (req, res) => {
     const roomCode = req.params.roomCode.toUpperCase();
     console.log(roomCode);
-    
+    console.log(rooms[roomCode])
+
     let status = null;
     if (roomCode in rooms) {
+        console.log("good")
         status = "good"
     } else {
         status = "noRoomCode"
     }
     res.json({status: status})
+    console.log("sent")
 })
 
 // Websocket
@@ -159,7 +162,7 @@ io.on("connection", (socket) => {
         console.log("disconnect", socket.id)
         if(!socket.roomCode || !(socket.roomCode in rooms)) return;
         rooms[socket.roomCode].players = rooms[socket.roomCode].players.filter(item => item.id != socket.id)
-        rooms[socket.roomCode].host.emit("players_update", {players: rooms[socket.roomCode].players.map(socket => socket.id)})
+        rooms[socket.roomCode].host.emit("players_update", {players: rooms[socket.roomCode].players.map(socket => socket.username)})
     })
 })
 io.listen(setUp.WS_PORT)
